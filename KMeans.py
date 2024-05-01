@@ -19,10 +19,13 @@ class KMeans:
         for _ in range(self.max_iterations):
             clusters = [[] for _ in range(self.k)]
             labels = []
+            # Define a small tolerance level for convergence check
+            tolerance = 1e-4
 
             for point in x:
                 distances = [np.linalg.norm(point - centroid) for centroid in self.centroids]
                 if self.balanced:
+                    # Adjust distances for balance
                     for i in range(self.k):
                         distances[i] *= (1 + cluster_list[i] / len(x))
 
@@ -32,12 +35,19 @@ class KMeans:
 
             # Update centroids
             new_centroids = []
-            for cluster in clusters:
-                new_centroids.append(np.mean(cluster, axis=0))
-            if np.array_equal(self.centroids, new_centroids):
+            for i, cluster in enumerate(clusters):
+                if len(cluster) > 0:
+                    # Calculate the mean of the cluster if it has any points
+                    mean_centroid = np.mean(cluster, axis=0)
+                else:
+                    # If the cluster has no points, retain the old centroid
+                    mean_centroid = self.centroids[i]
+                new_centroids.append(mean_centroid)
+            centroid_shifts = np.linalg.norm(np.array(self.centroids) - np.array(new_centroids), axis=1)
+            # Check convergence based on centroid shifts
+            if np.all(centroid_shifts < tolerance):
                 break
-            else:
-                self.centroids = new_centroids
+            self.centroids = new_centroids
 
         return labels, self.centroids
 
